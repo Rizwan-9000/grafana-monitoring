@@ -1,0 +1,39 @@
+groups:
+ - name: alerts
+   rules:
+    - alert: Server_is_Down
+      expr: up == 0
+      for: 1m
+      labels:
+        severity: ' critical '
+      annotations:
+        summary: " Server is Down {{ $labels.instance }} "
+        description: " Server {{ $labels.instance }} is Down for more than 1 minute."
+
+    - alert: High_CPU_Usage
+      expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+      for: 1m
+      labels:
+        severity: ' critical '   
+      annotations:
+        summary: " High CPU Usage on Server {{ $labels.instance }} "  
+        description: " CPU usage is greater than 80% on {{ $labels.instance }}, CPU = {{ $value }}"
+
+    - alert: High_Memory_Usage
+      expr: node_memory_MemAvailable / node_memory_MemTotal * 100 < 25
+      for: 1m
+      labels:
+        severity: ' critical '
+      annotations:
+        summary: " High Memory Usage on Server (instance {{ $labels.instance }} ) "
+        description: " Server ( instance {{ $labels.instance }} ) is out of Memory, Mem = {{ $value }} "
+
+    - alert: High_Disk_Usage
+      expr: 100 - 100 * (node_filesystem_avail_bytes{mountpoint="/"}) / (node_filesystem_size_bytes{mountpoint="/"}) > 60
+      for: 1m
+      labels:
+        severity: ' warning '
+      annotations: 
+        summary: " Disk Space of Server ( instance {{ $labels.instance }} ) is less than 60% "
+        description: " Disk Space of Server ( instance {{ $labels.instance }} ) is nearly full, less than 60% is left. Disk = {{ $value }} "  
+     

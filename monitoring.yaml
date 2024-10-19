@@ -1,0 +1,68 @@
+version: '3.9'
+volumes:
+    grafana-data:
+services:
+    grafana:
+        image: grafana/grafana
+        container_name: grafana-cont
+        user: '472'
+        ports:
+         - '3000:3000'
+        volumes:
+         - grafana-data:/var/lib/grafana
+        env_file:
+        - ./grafana/config.monitoring
+        restart: always
+
+    prometheus:
+        image: prom/prometheus
+        container_name: prom-cont
+        ports:
+         - '9090:9090'
+        volumes:
+         - ./prometheus-configs/:/etc/prometheus/
+        command:
+         - '--config.file=/etc/prometheus/node-exporter.yaml'
+        restart: always
+
+    node-exp:
+        image: prom/node-exporter
+        container_name: node-cont
+        ports:
+         - '9100:9100'
+        volumes:
+         - /proc:/host/proc:ro
+         - /sys:/host/sys:ro
+         - /:/rootfs:ro
+         - /:/host:ro,rslave
+        command:
+         - '--path.rootfs=/host'
+         - '--path.procfs=/host/proc' 
+         - '--path.sysfs=/host/sys'
+         - --collector.filesystem.ignored-mount-points
+         - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+        restart: unless-stopped
+
+    cadvisor:
+        image: gcr.io/cadvisor/cadvisor
+        container_name: cadvisor-cont
+        ports:
+         - '8080:8080'
+        volumes:
+         - /:/rootfs:ro
+         - /var/run:/var/run:ro
+         - /sys:/sys:ro
+         - /var/lib/docker/:/var/lib/docker:ro
+         - /var/run/docker.sock:/var/run/docker.sock:ro
+        restart: unless-stopped
+
+    alert-manager:
+        image: prom/alertmanager
+        container_name: alert-cont
+        ports:
+         - '9093:9093'
+        volumes:
+         - ./prometheus-configs/:/etc/alertmanager/
+        command:
+         - '--config.file=/etc/alertmanager/notification.yaml'
+        restart: always
