@@ -16,7 +16,7 @@ services:
 
     loki:
         image: grafana/loki:3.0.0
-        contaianer_name: loki-cont
+        container_name: loki-cont
         ports:
          - '3100:3100'
         volumes:
